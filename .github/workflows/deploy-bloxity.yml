@@ -1,0 +1,110 @@
+# ============================================================
+# Ball vs Ball client -> Bloxity hosting (frontend)
+# ============================================================
+# Branch -> channel -> game server it talks to:
+#   dev           -> dev  (https://ball-vs-ball.dev.play.bloxity.io) -> https://ball-vs-ball.dev.host.bloxity.io
+#   master / main -> prod (https://ball-vs-ball.play.bloxity.io)     -> https://ball-vs-ball.host.bloxity.io
+#
+# Repo secret required (Settings -> Secrets and variables -> Actions):
+#   LEGION_DEPLOY_TOKEN   the deploy token from hosting.bloxity.io (same one as the server repo)
+#
+# The server is deployed from its own repo (Ball-vs-Ball-server).
+
+name: Deploy to Bloxity
+
+on:
+  push:
+    branches: [master, main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GAME_ID: ball-vs-ball
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the deploy token is present
+        env:
+          LEGION_TOKEN: ${{ secrets.LEGION_DEPLOY_TOKEN }}
+        run: |
+          if [ -z "${LEGION_TOKEN:-}" ]; then
+            echo "::error::LEGION_DEPLOY_TOKEN is not set on this repository."
+            echo "Add it under Settings -> Secrets and variables -> Actions."
+            echo "The value is the deploy token from hosting.bloxity.io."
+            exit 1
+          fi
+          echo "Deploy token present (${#LEGION_TOKEN} characters)."
+
+      - name: Work out the channel
+        id: ch
+        run: |
+          if [ "${{ github.ref_name }}" = "dev" ]; then
+            echo "channel=dev" >> "$GITHUB_OUTPUT"
+            echo "api_url=https://${GAME_ID}.dev.host.bloxity.io" >> "$GITHUB_OUTPUT"
+          else
+            echo "channel=prod" >> "$GITHUB_OUTPUT"
+            echo "api_url=https://${GAME_ID}.host.bloxity.io" >> "$GITHUB_OUTPUT"
+          fi
+          echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Vite bakes VITE_* in at build time, so each channel's build points at its own server.
+      - name: Build the client
+        env:
+          VITE_API_URL: ${{ steps.ch.outputs.api_url }}
+          VITE_GAME_SLUG: ${{ env.GAME_ID }}
+        run: |
+          echo "Building against $VITE_API_URL"
+          npm ci
+          npm run build
+
+      - name: Zip the build
+        working-directory: dist
+        run: zip -qr ../build.zip .
+
+      - name: Upload the client to Bloxity
+        env:
+          LEGION_TOKEN: ${{ secrets.LEGION_DEPLOY_TOKEN }}
+          CHANNEL: ${{ steps.ch.outputs.channel }}
+          VERSION: ${{ steps.ch.outputs.sha }}
+        run: |
+          set -uo pipefail
+          url="https://api.bloxity.io/v1/hosting/games/${GAME_ID}/frontend?channel=${CHANNEL}&version=${VERSION}"
+          echo "POST $url"
+          ls -la build.zip
+          body="$(mktemp)"
+          code="$(curl -sS -o "$body" -w '%{http_code}' -X POST "$url" \
+            --connect-timeout 15 --max-time 300 \
+            -H "Authorization: Bearer ${LEGION_TOKEN}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @build.zip)" || {
+            echo "::error::curl could not reach the hosting API at all (network/DNS)."
+            exit 1
+          }
+          echo "HTTP $code"
+          echo "--- response ---"; cat "$body"; echo; echo "----------------"
+          case "$code" in
+            2*) echo "Client uploaded." ;;
+            401|403) echo "::error::Hosting rejected the token (HTTP $code)."; exit 1 ;;
+            404) echo "::error::No hosted game called '${GAME_ID}' (HTTP 404). Create it on hosting.bloxity.io first."; exit 1 ;;
+            413) echo "::error::build.zip is too large for the hosting API (HTTP 413)."; exit 1 ;;
+            *) echo "::error::Client upload failed with HTTP $code - see the response above."; exit 1 ;;
+          esac
+
+      - name: Where it went
+        run: |
+          if [ "${{ steps.ch.outputs.channel }}" = "prod" ]; then
+            echo "Play: https://${GAME_ID}.play.bloxity.io"
+          else
+            echo "Play: https://${GAME_ID}.dev.play.bloxity.io"
+          fi
