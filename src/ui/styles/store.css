@@ -451,9 +451,21 @@ img.ball-thumb { object-fit: contain; -webkit-user-drag: none; }
 .hud .sticker:hover:not(:disabled) { background: #42464e; }
 .hud .sticker:disabled { opacity: 0.45; cursor: default; }
 .sticker-emoji { font: calc(78 * var(--su)) / 1 "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
+/* Touch screens: the thumb stick and Jump take the bottom right corner. On a wide (landscape) screen the
+   button sits left of them, clear of the quests above; upright, it goes over the stick. */
 @media (pointer: coarse) {
-  .hud .stickers-button { bottom: calc(260 * var(--u)); }
-  .stickers-panel { bottom: calc(400 * var(--u)); }
+  .hud .stickers-button { right: calc(392 * var(--u)); bottom: calc(36 * var(--u)); width: calc(100 * var(--u)); height: calc(100 * var(--u)); }
+  .stickers-button-icon { width: calc(60 * var(--u)); height: calc(60 * var(--u)); }
+  .stickers-panel { --su: min(var(--u), calc(100vh / 900)); right: calc(392 * var(--u)); bottom: calc(150 * var(--u)); }
+}
+@media (pointer: coarse) and (orientation: portrait) {
+  .hud .stickers-button { right: calc(48 * var(--u)); bottom: calc(262 * var(--u)); }
+  .stickers-panel { right: calc(22 * var(--u)); bottom: calc(380 * var(--u)); }
+}
+/* In a duel there is no stick: the button goes back to the corner, clear of Leave, Reroll and Lock Aim. */
+@media (pointer: coarse) {
+  .hud:has(.badge) .stickers-button { right: calc(22 * var(--u)); bottom: calc(26 * var(--u)); }
+  .hud:has(.badge) .stickers-panel { right: calc(22 * var(--u)); bottom: calc(140 * var(--u)); }
 }
 
 /* ---- The payment window (the Bloxity portal's style, as the Gifting window) ------------------------------ */

@@ -8,7 +8,11 @@ export const STICKERS = ['😱', '😯', '😃', '🤢', '🤔', '😈'];
 
 const SIZE = 128;
 const LIFE = 3; // seconds on show
-const LIFT = 4.6; // over the head, clear of the duel hearts floating there
+/**
+ * How far over the head a sticker floats: just over a bare head, or just over a name tag (other players) or the
+ * duel hearts when one of those is there.
+ */
+export const STICKER_LIFT = { bare: 1.15, overName: 3.15, overHearts: 3.5 };
 const textures = new Map();
 
 function textureOf(index) {
@@ -33,15 +37,15 @@ function textureOf(index) {
 const easeOutBack = (x) => 1 + 2.70158 * (x - 1) ** 3 + 1.70158 * (x - 1) ** 2;
 
 /**
- * show(key, index, headOf)   pops sticker `index` over `key`'s head; headOf(target) writes the head's position
- *                           (or returns false when that player is gone)
+ * show(key, index, headOf, lift)   pops sticker `index` `lift` over `key`'s head (see STICKER_LIFT); headOf(target)
+ *                           writes the head's position (or returns false when that player is gone)
  * update(dt)                true while any is showing (the frame needs drawing)
  */
 export function createStickerBubbles(scene) {
   const bubbles = new Map(); // key -> { sprite, age, headOf }
   const at = new THREE.Vector3();
 
-  const show = (key, index, headOf) => {
+  const show = (key, index, headOf, lift = STICKER_LIFT.bare) => {
     if (!STICKERS[index]) return;
     let bubble = bubbles.get(key);
     if (!bubble) {
@@ -55,6 +59,7 @@ export function createStickerBubbles(scene) {
     bubble.sprite.material.needsUpdate = true;
     bubble.age = 0;
     bubble.headOf = headOf;
+    bubble.lift = lift;
   };
 
   const update = (dt) => {
@@ -72,7 +77,7 @@ export function createStickerBubbles(scene) {
       const fade = Math.min(1, (LIFE - age) / 0.4);
       sprite.scale.setScalar(2.6 * grow);
       sprite.material.opacity = fade;
-      sprite.position.copy(at).y += LIFT + Math.sin(age * 5) * 0.12 + Math.min(1, age / 0.3) * 0.4;
+      sprite.position.copy(at).y += bubble.lift +Math.sin(age * 5) * 0.12 + Math.min(1, age / 0.3) * 0.4;
     }
     return true;
   };

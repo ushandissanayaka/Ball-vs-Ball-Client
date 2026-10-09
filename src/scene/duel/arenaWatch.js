@@ -3,7 +3,7 @@ import { fetchArenas } from '../../net/api.js';
 import { createSmokeBurst } from '../../effects/duelFx.js';
 import { createFightView } from '../../objects/duel/fightView.js';
 import { createHeartsSprite } from '../../objects/duel/heartsSprite.js';
-import { SIM } from '../../shared/duelSim.js';
+import { MS_PER_TICK } from '../../shared/duelSim.js';
 import { createStrike } from './strike.js';
 import { createLegionCharacter, disposeCharacter } from '../../objects/player/LegionCharacter.js';
 import { createHeadshot, idle } from '../headshot.js';
@@ -47,7 +47,7 @@ export function createArenaWatch({ scene, renderer, camera, arenas, seatArenaId,
     if (!watched.has(arenaId)) {
       watched.set(arenaId, {
         occupants: null, sides: { pink: null, blue: null }, applied: '', live: false, launchAt: 0,
-        duel: null, fightView: null, strike: null, hearts: null, count: null,
+        duel: null, fightView: null, strike: null, hearts: null, count: null, staging: false,
       });
     }
     return watched.get(arenaId);
@@ -145,9 +145,14 @@ export function createArenaWatch({ scene, renderer, camera, arenas, seatArenaId,
     timer = setTimeout(poll, !list && !document.hidden ? OFFLINE_POLL_MS : anyLive ? LIVE_POLL_MS : POLL_MS);
   }
 
-  /** Stops showing an arena's duel: empties the box, hides the hearts, rolls the screen back down. */
+  /**
+   * Stops showing an arena's duel: empties the box, hides the hearts, rolls the screen back down. Once only: run
+   * every frame, it would keep rolling down the screen (and hiding the countdown) of the arena the player has
+   * since sat down on, which is the duel director's to draw.
+   */
   function endWatch(entry, arena) {
-    if (!entry.fightView) return;
+    if (!entry.fightView || !entry.staging) return;
+    entry.staging = false;
     entry.fightView.clear();
     entry.strike.end();
     for (const hearts of Object.values(entry.hearts)) hearts.group.visible = false;
@@ -170,6 +175,7 @@ export function createArenaWatch({ scene, renderer, camera, arenas, seatArenaId,
       entry.hearts = { pink: createHeartsSprite(), blue: createHeartsSprite() };
       for (const hearts of Object.values(entry.hearts)) scene.add(hearts.group);
     }
+    entry.staging = true;
     const { phase, fight } = duel;
     const roundKey = `${duel.id}:${duel.round}`;
     // The VS screen counts down, then rolls up to open the box.
@@ -191,7 +197,7 @@ export function createArenaWatch({ scene, renderer, camera, arenas, seatArenaId,
       view.showArrow(false);
     } else if (phase === 'fight' && fight) {
       view.start(fight);
-      view.advanceTo(Math.max(0, Math.min(fight.ticks, Math.floor((serverNow - fight.startsAt) / (1000 / SIM.tickRate)))));
+      view.advanceTo(Math.max(0, Math.min(fight.ticks, Math.floor((serverNow - fight.startsAt) / MS_PER_TICK))));
       entry.strike.stage(serverNow, fight, roundKey, view, entry.sides[fight.loser]?.character, { audible: false });
     } else {
       view.clear();

@@ -107,6 +107,9 @@ export function createRemotePlayers(scene, camera) {
     return target.copy(player.target).setY(player.target.y + CHARACTER_HEIGHT * 0.88);
   };
 
+  /** Whether player `id` stands on a duel square (their arena draws them, with hearts over their head). */
+  const isSeated = (id) => ((players.get(id)?.flags ?? 0) & 2) !== 0;
+
   /**
    * The character of the player a chat message came from: by their Bloxity account id, or (a guest) by name.
    * Null if they aren't here.
@@ -120,5 +123,5 @@ export function createRemotePlayers(scene, camera) {
     return byName;
   };
 
-  return { onJoin, onLeave, onState, onReset, update, headOf, characterOf, get count() { return players.size; } };
+  return { onJoin, onLeave, onState, onReset, update, headOf, isSeated, characterOf, get count() { return players.size; } };
 }

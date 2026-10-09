@@ -9,7 +9,7 @@ import { createDuelWarmup, warmUpRenderer } from './duel/duelWarmup.js';
 import { createArenaWatch } from './duel/arenaWatch.js';
 import { createHeadshot } from './headshot.js';
 import { NAME_LIFT, createRemotePlayers } from './remotePlayers.js';
-import { createStickerBubbles, warmStickers } from './stickers.js';
+import { STICKER_LIFT, createStickerBubbles, warmStickers } from './stickers.js';
 import { idle } from './headshot.js';
 import { stickerSound } from '../audio/sfx.js';
 import { connectPresence } from '../net/presence.js';
@@ -111,12 +111,12 @@ export function createLobbyWorld(canvas, {
   const stickers = createStickerBubbles(scene);
   // Someone else's sticker: over their head, with its sound (quieter than one's own).
   others.onSticker = (id, index) => {
-    stickers.show(id, index, (target) => others.headOf(id, target));
+    stickers.show(id, index, (target) => others.headOf(id, target), others.isSeated(id) ? STICKER_LIFT.overHearts : STICKER_LIFT.overName);
     stickerSound(index, false);
   };
   /** The player's own sticker: over their head at once, and to everyone else. */
   const sendSticker = (index) => {
-    stickers.show('me', index, (target) => character.headPosition(target));
+    stickers.show('me', index, (target) => character.headPosition(target), duel.seated ? STICKER_LIFT.overHearts : STICKER_LIFT.bare);
     stickerSound(index, true);
     presence?.sendSticker(index);
     needsRender = true;

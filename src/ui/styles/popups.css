@@ -2,7 +2,7 @@
    screenshots in --pu: one pixel of the shot, shrunk further when the window would not fit the screen. */
 .popup {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); box-sizing: border-box;
-  z-index: 5; pointer-events: auto; letter-spacing: 0; animation: popup-in 0.22s cubic-bezier(0.2, 1.3, 0.5, 1) both;
+  z-index: 7; pointer-events: auto; letter-spacing: 0; animation: popup-in 0.22s cubic-bezier(0.2, 1.3, 0.5, 1) both;
 }
 @keyframes popup-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } }
 .popup .outlined { -webkit-text-stroke-width: calc(4 * var(--pu)); }

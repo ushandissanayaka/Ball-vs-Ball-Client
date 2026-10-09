@@ -563,6 +563,48 @@
 .hud .account-menu button { padding: calc(10 * var(--u)) calc(14 * var(--u)); border-radius: calc(6 * var(--u)); text-align: left; font-size: calc(17 * var(--u)); font-weight: 600; }
 .hud .account-menu button:hover { background: #2a2b30; scale: 1; translate: 0; }
 
+/* ---- Small screens ------------------------------------------------------------------------------------
+   Phones in landscape have about 720 units of height for a layout drawn 1031 tall: the left column and the
+   wallet are shrunk toward their corners so they no longer run into each other, and the aim title is set
+   smaller so it fits between the two players' corners. */
+@media (max-width: 900px), (pointer: coarse) {
+  .side-menu { top: calc(120 * var(--u)); transform: scale(0.78); transform-origin: 0 0; }
+  .wallet { transform: scale(0.82); transform-origin: 0 100%; }
+  .aim-title { font-size: calc(40 * var(--u)); -webkit-text-stroke-width: calc(5.5 * var(--u)); }
+  .aim-hint { top: calc(70 * var(--u)); }
+  .duel-wait.aim-wait { top: calc(70 * var(--u)); }
+  .hud .badge { scale: 0.85; }
+  .badge-pink { transform-origin: 0 0; }
+  .badge-blue { transform-origin: 100% 0; }
+  .choose-title { font-size: calc(30 * var(--cu)); }
+  .badge-name { max-width: calc(230 * var(--u)); overflow: hidden; text-overflow: ellipsis; }
+}
+/* Upright phones: the same HUD, sized to the screen's width instead of its height (which leaves room to
+   spare above and below), with the duel's titles and cards moved down under the players' corners. */
+@media (orientation: portrait) and (max-width: 900px) {
+  .hud { --u: min(calc(100vw / 760), calc(100vh / 1100)); }
+  .side-menu { top: calc(150 * var(--u)); transform: none; }
+  .play-dock { bottom: calc(290 * var(--u)); }
+  .queue-dock { bottom: calc(120 * var(--u)); }
+  .hud .badge { scale: 0.72; }
+  .badge-pink { transform-origin: 0 0; translate: calc(-10 * var(--u)) 0; }
+  .badge-blue { transform-origin: 100% 0; translate: calc(10 * var(--u)) 0; }
+  .choose-title, .choose-cards, .choose-actions, .duel-wait { --cu: min(var(--u), calc(100vw / 1000)); }
+  .choose-title { top: 28vh; }
+  .duel-wait { top: calc(28vh + 56 * var(--cu)); }
+  .choose-cards { top: calc(28vh + 110 * var(--cu)); gap: calc(30 * var(--cu)); }
+  .choose-cards.all { top: calc(28vh + 90 * var(--cu)); grid-template-columns: repeat(3, auto); }
+  .choose-actions { top: calc(28vh + 650 * var(--cu)); }
+  .all-balls-panel { --cu: min(var(--u), calc(100vw / 1100)); }
+  .all-balls-grid { grid-template-columns: repeat(4, calc(170 * var(--cu))); }
+  .all-balls-panel { width: calc(760 * var(--cu)); height: min(calc(1300 * var(--cu)), 90vh); }
+  .all-balls-buttons { gap: calc(40 * var(--cu)); }
+  .aim-title { top: 24vh; font-size: calc(34 * var(--u)); }
+  .aim-hint, .duel-wait.aim-wait { top: calc(24vh + 56 * var(--u)); }
+  .fight-banner { font-size: calc(96 * var(--u)); }
+  .duel-result-title { font-size: calc(80 * var(--u)); }
+}
+
 /* Frames per second, top centre (the portal's Show FPS setting). */
 .fps-counter {
   position: fixed; top: 6px; left: 50%; transform: translateX(-50%); z-index: 50; padding: 2px 8px; border-radius: 4px;

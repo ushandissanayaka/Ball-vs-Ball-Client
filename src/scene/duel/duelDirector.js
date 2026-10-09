@@ -13,12 +13,11 @@ import { createLegionCharacter, disposeCharacter } from '../../objects/player/Le
 import { SIDES } from '../../objects/props/DuelArena.js';
 import { DUEL } from '../../shared/constants.js';
 import { DUEL_TIMING, otherSide } from '../../shared/duelMatch.js';
-import { SIM, START } from '../../shared/duelSim.js';
+import { MS_PER_TICK, START } from '../../shared/duelSim.js';
 import { createHeadshot } from '../headshot.js';
 import { createLocalDuel } from './localDuel.js';
 
 const POLL_MS = 500;
-const MS_PER_TICK = 1000 / SIM.tickRate;
 // The camera turns toward the loser as the ball flies, holds on the hit, and turns back (ms after the fight ends).
 const PAN = { in: 900, full: 1800, hold: 3600, out: 4300 };
 const OPEN_PHASES = new Set(['choose', 'aim', 'fight', 'over']);
